@@ -21,36 +21,36 @@ df_filtrado = df[~(df['user'].astype(str).apply(contem_palavra, palavras=excluir
                    df['username'].astype(str).apply(contem_palavra, palavras=excluir_palavras))]
 
 # Função de pré-processamento
-def preprocessamento(tweet):
-    # Verifica se o tweet é uma string
-    if isinstance(tweet, str):
+def preprocessamento(postagem):
+    # Verifica se o postagem é uma string
+    if isinstance(postagem, str):
         # Substitui quebras de linha por espaços
-        tweet = tweet.replace('\n', ' ')
+        postagem = postagem.replace('\n', ' ')
         # Remove URLs
-        tweet = re.sub(r'http\S+|www\S+|https\S+', '', tweet, flags=re.MULTILINE)
+        postagem = re.sub(r'http\S+|www\S+|https\S+', '', postagem, flags=re.MULTILINE)
         # Tokenização
-        tweet_tokenizer = TweetTokenizer()
-        tokens = tweet_tokenizer.tokenize(tweet)
+        postagem_tokenizer = TweetTokenizer()
+        tokens = postagem_tokenizer.tokenize(postagem)
         # Junta os tokens de volta em uma string
-        tweet = ' '.join(tokens)
+        postagem = ' '.join(tokens)
     else:
-        tweet = ''
-    return tweet
+        postagem = ''
+    return postagem
 
 # Substitui NaN por uma string vazia
-df_filtrado['tweet'] = df_filtrado['tweet'].fillna('')
+df_filtrado['postagem'] = df_filtrado['postagem'].fillna('')
 
 # Aplica o pré-processamento
-df_filtrado['tweet_processado'] = df_filtrado['tweet'].apply(preprocessamento)
+df_filtrado['postagem_processado'] = df_filtrado['postagem'].apply(preprocessamento)
 
 s = SentimentIntensityAnalyzer()
 
-def analisesentimento(tweet_processado):
- df_analisado = s.polarity_scores(tweet_processado)['compound'] 
+def analisesentimento(postagem_processado):
+ df_analisado = s.polarity_scores(postagem_processado)['compound'] 
  return df_analisado
 
 # aplicando a função e guardando na coluna sentimento
-df_filtrado['sentimento'] = df_filtrado['tweet_processado'].apply(analisesentimento)
+df_filtrado['sentimento'] = df_filtrado['postagem_processado'].apply(analisesentimento)
 
 # função que transforma valores do compound em positivo, negativo e neutro
 def analisesentimento2(sentimento):
@@ -104,7 +104,7 @@ def preProc(texto):
     return tokens
 
 # Aplicar a função de pré-processamento
-df_filtrado['tokens'] = df_filtrado['tweet_processado'].apply(preProc)
+df_filtrado['tokens'] = df_filtrado['postagem_processado'].apply(preProc)
 
 
 # Contando frequências dos termos individuais
@@ -177,7 +177,7 @@ def extrair_hashtags(texto):
     return re.findall(r'#\w+', texto)
 
 # Aplicar a função e extrair as hashtags
-df_filtrado['hashtags'] = df_filtrado['tweet_processado'].apply(extrair_hashtags)
+df_filtrado['hashtags'] = df_filtrado['postagem_processado'].apply(extrair_hashtags)
 
 # Criar uma lista com todas as hashtags
 lista_hashtags = sum(df_filtrado['hashtags'].tolist(), [])
@@ -282,10 +282,10 @@ df_filtrado['date'] = pd.to_datetime(df_filtrado['date'], format='%d/%m/%Y %H:%M
 df_filtrado['week_of_year'] = df_filtrado['date'].dt.isocalendar().week
 
 # Agrupar por semana e sentimento e contar as frequências
-tweets_por_semana_e_sentimento = df_filtrado.groupby(['week_of_year', 'sentimento']).size().unstack(fill_value=0)
+postagens_por_semana_e_sentimento = df_filtrado.groupby(['week_of_year', 'sentimento']).size().unstack(fill_value=0)
 
 # Obter uma lista das semanas para o eixo x
-weeks = tweets_por_semana_e_sentimento.index
+weeks = postagens_por_semana_e_sentimento.index
 
 # Obter a largura das barras
 bar_width = 0.35
@@ -298,15 +298,15 @@ r3 = [x + bar_width for x in r2]
 # Criar barras
 plt.figure(figsize=(15, 8))
 
-plt.bar(r1, tweets_por_semana_e_sentimento['positivo'], color='green', width=bar_width, edgecolor='gray', label='Positivo')
-plt.bar(r2, tweets_por_semana_e_sentimento['negativo'], color='red', width=bar_width, edgecolor='gray', label='Negativo')
-plt.bar(r3, tweets_por_semana_e_sentimento['neutro'], color='blue', width=bar_width, edgecolor='gray', label='Neutro')
+plt.bar(r1, postagens_por_semana_e_sentimento['positivo'], color='green', width=bar_width, edgecolor='gray', label='Positivo')
+plt.bar(r2, postagens_por_semana_e_sentimento['negativo'], color='red', width=bar_width, edgecolor='gray', label='Negativo')
+plt.bar(r3, postagens_por_semana_e_sentimento['neutro'], color='blue', width=bar_width, edgecolor='gray', label='Neutro')
 
 # Adicionar rótulos e título
 plt.xlabel('Semana do Ano', fontweight='bold')
 plt.xticks([r + bar_width for r in range(len(weeks))], weeks)
-plt.ylabel('Quantidade de Tweets')
-plt.title('Quantidade de Tweets por Semana e Sentimento')
+plt.ylabel('Quantidade de Postagens')
+plt.title('Quantidade de Postagens por Semana e Sentimento')
 
 # Criar legenda e mostrar gráfico
 plt.legend()
